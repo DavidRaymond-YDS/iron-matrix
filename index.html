@@ -3,132 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Matrix Pro | 终极健身实验室</title>
+    <title>Iron Matrix Ultra | 智能健身系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --neon: #39FF14; --carb: #3b82f6; --fat: #f59e0b; }
-        body { background: #000; color: #E5E5E7; font-family: system-ui, -apple-system, sans-serif; }
+        :root { --neon: #39FF14; }
+        body { background: #000; color: #E5E5E7; font-family: system-ui, sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
-        input { background: #111 !important; border: 1px solid #333 !important; color: #fff !important; padding: 10px !important; border-radius: 8px !important; outline: none !important; width: 100%; }
+        input, select { background: #111 !important; border: 1px solid #333 !important; color: #fff !important; padding: 10px !important; border-radius: 8px !important; outline: none !important; width: 100%; }
         input:focus { border-color: var(--neon) !important; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .nav-active { color: var(--neon); }
         .day-btn.active { background: var(--neon); color: #000; font-weight: bold; }
+        .macro-label { font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 2px; }
     </style>
 </head>
 <body class="p-4 pb-40">
 
     <div class="max-w-2xl mx-auto">
         <div id="tab-data" class="tab-content active space-y-6">
-            <header class="py-6"><h1 class="text-2xl font-black italic tracking-tighter uppercase">User Profile</h1></header>
-            <section class="glass p-6 space-y-6">
+            <header class="py-6 text-center">
+                <h1 class="text-3xl font-black italic tracking-tighter text-white uppercase">Iron Strategy</h1>
+            </header>
+            
+            <section class="glass p-6 space-y-4">
+                <h3 class="macro-label font-bold text-white text-xs">基础参数</h3>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="text-[10px] text-gray-500 uppercase">身高 (cm)</label><input type="number" id="height" placeholder="0" oninput="updateBase()"></div>
-                    <div><label class="text-[10px] text-gray-500 uppercase">体重 (kg)</label><input type="number" id="weight" placeholder="0" oninput="updateBase()"></div>
-                </div>
-                <div class="grid grid-cols-3 gap-4 pt-4 border-t border-white/5">
-                    <div><label class="text-[10px] text-gray-500 uppercase">卧推 PR</label><input type="number" id="bp-pr" placeholder="0" oninput="updateBase()"></div>
-                    <div><label class="text-[10px] text-gray-500 uppercase">深蹲 PR</label><input type="number" id="sq-pr" placeholder="0" oninput="updateBase()"></div>
-                    <div><label class="text-[10px] text-gray-500 uppercase">硬拉 PR</label><input type="number" id="dl-pr" placeholder="0" oninput="updateBase()"></div>
-                </div>
-                <div class="pt-4 border-t border-white/5 flex justify-between items-center">
-                    <span class="text-xs text-gray-400">每日建议热量 (TDEE):</span>
-                    <span class="text-xl font-mono" id="tdee-val">0</span>
+                    <input type="number" id="height" placeholder="身高 cm" oninput="updateBase()">
+                    <input type="number" id="weight" placeholder="体重 kg" oninput="updateBase()">
                 </div>
             </section>
+
             <section class="glass p-6 space-y-4">
-                <h3 class="text-xs font-bold text-gray-400 uppercase">高级模式</h3>
-                <div class="flex gap-2">
-                    <select id="carb-cycle" class="flex-1 bg-black border border-gray-800 p-2 rounded-lg text-sm" onchange="updateBase()">
-                        <option value="none">正常饮食</option>
-                        <option value="high">高碳日 (训练日)</option>
-                        <option value="low">低碳日 (休息日)</option>
-                    </select>
-                    <button onclick="toggleFast()" id="fast-btn" class="flex-1 border border-gray-800 rounded-lg text-xs">开启断食计时</button>
+                <h3 class="macro-label font-bold text-white text-xs">碳循环策略 (影响营养分配)</h3>
+                <select id="carb-cycle" onchange="updateBase()">
+                    <option value="none">正常饮食 (均衡模式)</option>
+                    <option value="high">高碳日 (训练日/促代谢)</option>
+                    <option value="low">低碳日 (休息日/刷脂)</option>
+                </select>
+                <div id="strategy-hint" class="text-[10px] p-3 rounded bg-white/5 leading-relaxed text-gray-400 italic">
+                    </div>
+            </section>
+
+            <section class="glass p-6 grid grid-cols-2 gap-4 text-center">
+                <div class="border-r border-white/5">
+                    <div class="macro-label">建议摄入热量</div>
+                    <div class="text-2xl font-mono text-white" id="target-kcal">0</div>
                 </div>
-                <div id="fast-timer" class="hidden text-center font-mono text-orange-500 text-sm">断食已持续: 00:00:00</div>
+                <div>
+                    <div class="macro-label">策略状态</div>
+                    <div class="text-xs mt-2" id="status-tag">等待输入数据...</div>
+                </div>
             </section>
         </div>
 
         <div id="tab-train" class="tab-content space-y-6">
-            <header class="py-6 flex justify-between items-center">
-                <h1 class="text-2xl font-black italic tracking-tighter uppercase">Weekly Log</h1>
-                <button onclick="addWorkoutRow()" class="bg-white text-black px-4 py-1 rounded text-xs font-bold">+ 动作</button>
+            <header class="py-6 flex justify-between items-center px-2">
+                <h1 class="text-2xl font-black italic tracking-tighter uppercase">Weekly Planner</h1>
+                <button onclick="addWorkoutRow()" class="bg-white text-black px-4 py-2 rounded-xl text-xs font-bold">+ 动作</button>
             </header>
             <div class="flex justify-between gap-1 overflow-x-auto pb-2">
-                <button onclick="switchDay(0)" class="day-btn flex-1 p-2 glass text-[10px]">一</button>
-                <button onclick="switchDay(1)" class="day-btn flex-1 p-2 glass text-[10px]">二</button>
-                <button onclick="switchDay(2)" class="day-btn flex-1 p-2 glass text-[10px]">三</button>
-                <button onclick="switchDay(3)" class="day-btn flex-1 p-2 glass text-[10px]">四</button>
-                <button onclick="switchDay(4)" class="day-btn flex-1 p-2 glass text-[10px]">五</button>
-                <button onclick="switchDay(5)" class="day-btn flex-1 p-2 glass text-[10px]">六</button>
-                <button onclick="switchDay(6)" class="day-btn flex-1 p-2 glass text-[10px]">日</button>
+                <button onclick="switchDay(0)" class="day-btn flex-1 p-2 glass text-[10px]">MON</button>
+                <button onclick="switchDay(1)" class="day-btn flex-1 p-2 glass text-[10px]">TUE</button>
+                <button onclick="switchDay(2)" class="day-btn flex-1 p-2 glass text-[10px]">WED</button>
+                <button onclick="switchDay(3)" class="day-btn flex-1 p-2 glass text-[10px]">THU</button>
+                <button onclick="switchDay(4)" class="day-btn flex-1 p-2 glass text-[10px]">FRI</button>
+                <button onclick="switchDay(5)" class="day-btn flex-1 p-2 glass text-[10px]">SAT</button>
+                <button onclick="switchDay(6)" class="day-btn flex-1 p-2 glass text-[10px]">SUN</button>
             </div>
             <div id="workout-list" class="space-y-4"></div>
-            <div class="glass p-4 text-center text-xs text-green-500">该日总容量: <span id="day-vol">0</span> kg</div>
+            <div class="glass p-4 text-center font-mono text-xs">
+                DAY VOLUME: <span id="day-vol" class="text-green-500 font-bold text-lg">0</span> KG
+            </div>
         </div>
 
         <div id="tab-food" class="tab-content space-y-6">
-            <header class="py-6"><h1 class="text-2xl font-black italic tracking-tighter uppercase">Nutrition</h1></header>
-            <section class="glass p-6 space-y-4 text-xs">
-                <div class="flex justify-between"><span>能量: <b id="curr-kcal">0</b> / <b id="target-kcal">0</b> kcal</span></div>
-                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden"><div id="kcal-bar" class="h-full bg-white transition-all"></div></div>
-                <div class="grid grid-cols-3 gap-4 font-mono">
-                    <div>蛋白 <div id="p-stat">0g</div><div class="h-1 bg-green-900 mt-1"><div id="p-bar" class="h-full bg-green-500"></div></div></div>
-                    <div>碳水 <div id="c-stat">0g</div><div class="h-1 bg-blue-900 mt-1"><div id="c-bar" class="h-full bg-blue-500"></div></div></div>
-                    <div>脂肪 <div id="f-stat">0g</div><div class="h-1 bg-yellow-900 mt-1"><div id="f-bar" class="h-full bg-yellow-500"></div></div></div>
+            <header class="py-6 px-2 text-center">
+                <h1 class="text-2xl font-black italic tracking-tighter uppercase">Nutrition Lab</h1>
+            </header>
+            
+            <section class="glass p-6 space-y-5">
+                <div class="flex justify-between items-end">
+                    <span class="macro-label">热量摄入</span>
+                    <span class="font-mono text-xl"><span id="curr-kcal">0</span> / <span id="max-kcal">0</span> <small class="text-xs">kcal</small></span>
+                </div>
+                <div class="h-1 bg-white/5 rounded-full overflow-hidden"><div id="kcal-bar" class="h-full bg-white transition-all duration-700"></div></div>
+                
+                <div class="grid grid-cols-3 gap-4 font-mono text-center">
+                    <div><div class="macro-label">蛋白质</div><div id="p-stat" class="text-sm">0g</div><div class="h-1 bg-green-900 mt-1"><div id="p-bar" class="h-full bg-green-500"></div></div></div>
+                    <div><div class="macro-label">碳水</div><div id="c-stat" class="text-sm">0g</div><div class="h-1 bg-blue-900 mt-1"><div id="c-bar" class="h-full bg-blue-500"></div></div></div>
+                    <div><div class="macro-label">脂肪</div><div id="f-stat" class="text-sm">0g</div><div class="h-1 bg-yellow-900 mt-1"><div id="f-bar" class="h-full bg-yellow-500"></div></div></div>
                 </div>
             </section>
+
             <section class="glass p-6">
-                <input type="text" id="food-search" placeholder="输入食物名称查询..." oninput="searchFood()">
+                <input type="text" id="food-search" placeholder="🔍 搜索食物库..." oninput="searchFood()">
                 <div id="food-results" class="mt-4 space-y-2"></div>
             </section>
         </div>
     </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-black/90 border-t border-white/10 flex justify-around p-4 z-50">
-        <button onclick="showTab('data')" id="nav-data" class="nav-item flex flex-col items-center"><span>📊</span><span class="text-[10px]">数据</span></button>
-        <button onclick="showTab('train')" id="nav-train" class="nav-item flex flex-col items-center"><span>🏋️</span><span class="text-[10px]">周训练</span></button>
-        <button onclick="showTab('food')" id="nav-food" class="nav-item flex flex-col items-center"><span>🥩</span><span class="text-[10px]">饮食</span></button>
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-sm glass py-4 px-6 flex justify-around items-center z-50 shadow-2xl">
+        <button onclick="showTab('data')" id="nav-data" class="nav-item flex flex-col items-center gap-1"><span>📈</span><span class="text-[8px] uppercase">策略</span></button>
+        <button onclick="showTab('train')" id="nav-train" class="nav-item flex flex-col items-center gap-1"><span>🏋️</span><span class="text-[8px] uppercase">训练</span></button>
+        <button onclick="showTab('food')" id="nav-food" class="nav-item flex flex-col items-center gap-1"><span>🍗</span><span class="text-[8px] uppercase">饮食</span></button>
+        <button onclick="resetData()" class="flex flex-col items-center gap-1 text-red-900"><span>🧹</span><span class="text-[8px] uppercase">清空</span></button>
     </nav>
 
     <script>
-        // 核心数据结构
         let appData = {
-            h: 0, w: 0, bp: 0, sq: 0, dl: 0,
-            carbMode: 'none',
-            fasting: { active: false, start: null },
+            h: 0, w: 0, bp: 0, sq: 0, dl: 0, carbMode: 'none',
             dailyNutri: { p: 0, c: 0, f: 0, kcal: 0 },
-            weeklyWorkouts: [[], [], [], [], [], [], []] // 周一到周日
+            weeklyWorkouts: [[], [], [], [], [], [], []]
         };
         let currentDay = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
-        // 简易食物库 (真实项目中可对接外部API，这里内置示例)
         const foodDB = [
-            { name: "鸡胸肉", p: 31, c: 0, f: 3.6, k: 165, unit: "100g" },
-            { name: "鸡蛋", p: 6.3, c: 0.7, f: 4.8, k: 78, unit: "1个" },
-            { name: "糙米饭", p: 2.7, c: 24, f: 0.9, k: 111, unit: "100g" },
-            { name: "牛排(瘦)", p: 25, c: 0, f: 8, k: 180, unit: "100g" },
-            { name: "牛油果", p: 2, c: 8.5, f: 14.7, k: 160, unit: "100g" },
-            { name: "蛋白粉", p: 24, c: 2, f: 1.5, k: 120, unit: "1勺" }
+            { name: "鸡胸肉", p: 31, c: 0, f: 3.6, k: 165, base: 100 },
+            { name: "白米饭", p: 2.6, c: 25.9, f: 0.3, k: 116, base: 100 },
+            { name: "鸡蛋", p: 13, c: 1, f: 10, k: 147, base: 100 },
+            { name: "瘦牛肉", p: 26, c: 0, f: 6, k: 158, base: 100 },
+            { name: "燕麦片", p: 12, c: 66, f: 7, k: 367, base: 100 },
+            { name: "蛋白粉", p: 80, c: 8, f: 5, k: 400, base: 100 }
         ];
 
         function updateBase() {
             appData.h = parseFloat(document.getElementById('height').value) || 0;
             appData.w = parseFloat(document.getElementById('weight').value) || 0;
-            appData.bp = document.getElementById('bp-pr').value || 0;
             appData.carbMode = document.getElementById('carb-cycle').value;
+
+            // 1. 计算基础 TDEE (1.4系数)
+            let bmr = (10 * appData.w + 6.25 * appData.h - 5 * 25 + 5);
+            let tdee = bmr * 1.4;
+            let targetKcal = tdee;
+            let hint = "正常模式：维持现状，营养均衡。";
+            let tag = "MAINTENANCE";
+
+            // 2. 实装碳循环逻辑
+            if(appData.carbMode === 'high') {
+                targetKcal = tdee * 1.2;
+                hint = "高碳日：热量盈余 20%，强化碳水，适合大重量训练日。";
+                tag = "ANABOLIC";
+            } else if(appData.carbMode === 'low') {
+                targetKcal = tdee * 0.9;
+                hint = "低碳日：热量赤字 10%，严控碳水，适合刷脂或休息日。";
+                tag = "FAT BURNING";
+            }
+
+            document.getElementById('target-kcal').innerText = Math.round(targetKcal);
+            document.getElementById('max-kcal').innerText = Math.round(targetKcal);
+            document.getElementById('strategy-hint').innerText = hint;
+            document.getElementById('status-tag').innerText = tag;
+            document.getElementById('status-tag').className = "text-xs mt-2 font-bold " + (appData.carbMode === 'high' ? 'text-green-500' : (appData.carbMode === 'low' ? 'text-blue-500' : 'text-gray-400'));
             
-            const bmr = 10 * appData.w + 6.25 * appData.h - 5 * 25 + 5;
-            const tdee = Math.round(bmr * 1.4);
-            document.getElementById('tdee-val').innerText = tdee;
-            document.getElementById('target-kcal').innerText = tdee;
             updateNutriUI();
             save();
         }
 
-        // 训练逻辑
+        // 饮食：搜索与克数自定义
+        function searchFood() {
+            const q = document.getElementById('food-search').value;
+            const res = document.getElementById('food-results');
+            res.innerHTML = '';
+            if(!q) return;
+            foodDB.filter(f => f.name.includes(q)).forEach(f => {
+                const div = document.createElement('div');
+                div.className = "glass p-4 space-y-3";
+                div.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                        <span class="font-bold">${f.name} <small class="text-gray-500 font-normal">/ 100g</small></span>
+                        <div class="text-[10px] text-gray-400">P:${f.p} | C:${f.c} | F:${f.f}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="number" id="amt-${f.name}" placeholder="输入进食克数" class="flex-1">
+                        <button onclick="addCustomFood('${f.name}')" class="bg-green-500 text-black text-xs font-bold px-4 rounded-lg">添加</button>
+                    </div>
+                `;
+                res.appendChild(div);
+            });
+        }
+
+        function addCustomFood(name) {
+            const food = foodDB.find(f => f.name === name);
+            const amt = parseFloat(document.getElementById('amt-'+name).value) || 0;
+            if(amt <= 0) return;
+
+            const ratio = amt / 100;
+            appData.dailyNutri.p += food.p * ratio;
+            appData.dailyNutri.c += food.c * ratio;
+            appData.dailyNutri.f += food.f * ratio;
+            appData.dailyNutri.kcal += food.k * ratio;
+
+            document.getElementById('amt-'+name).value = '';
+            updateNutriUI();
+            save();
+            alert(`已记录 ${amt}g ${name}`);
+        }
+
+        function updateNutriUI() {
+            const n = appData.dailyNutri;
+            const targetK = parseFloat(document.getElementById('target-kcal').innerText) || 1;
+            document.getElementById('curr-kcal').innerText = Math.round(n.kcal);
+            document.getElementById('p-stat').innerText = Math.round(n.p) + 'g';
+            document.getElementById('c-stat').innerText = Math.round(n.c) + 'g';
+            document.getElementById('f-stat').innerText = Math.round(n.f) + 'g';
+            document.getElementById('kcal-bar').style.width = Math.min((n.kcal / targetK) * 100, 100) + '%';
+            
+            // 营养比例进度条 (以体重2g蛋白为基准)
+            const pTarget = appData.w * 2 || 150;
+            document.getElementById('p-bar').style.width = Math.min((n.p / pTarget) * 100, 100) + '%';
+        }
+
+        // 训练逻辑 (与之前一致但优化了存储)
         function switchDay(day) {
             currentDay = day;
             document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', i === day));
@@ -145,19 +231,16 @@
             list.innerHTML = '';
             let vol = 0;
             appData.weeklyWorkouts[currentDay].forEach(w => {
-                const itemVol = w.weight * w.sets * w.reps;
-                vol += itemVol;
+                vol += (w.weight * w.sets * w.reps);
                 const div = document.createElement('div');
-                div.className = "glass p-4 space-y-3 relative";
-                div.innerHTML = `
-                    <button onclick="delRow(${w.id})" class="absolute top-2 right-2 text-gray-600">×</button>
-                    <input type="text" value="${w.name}" onchange="updateW(${w.id},'name',this.value)" placeholder="项目名称" class="font-bold">
+                div.className = "glass p-4 relative space-y-3";
+                div.innerHTML = `<button onclick="delRow(${w.id})" class="absolute top-2 right-2 text-gray-600">×</button>
+                    <input type="text" value="${w.name}" onchange="updateW(${w.id},'name',this.value)" placeholder="动作名称 (如: 哑铃划船)">
                     <div class="grid grid-cols-3 gap-2">
                         <input type="number" value="${w.weight}" oninput="updateW(${w.id},'weight',this.value)" placeholder="KG">
                         <input type="number" value="${w.sets}" oninput="updateW(${w.id},'sets',this.value)" placeholder="组">
-                        <input type="number" value="${w.reps}" oninput="updateW(${w.id},'reps',this.value)" placeholder="回">
-                    </div>
-                `;
+                        <input type="number" value="${w.reps}" oninput="updateW(${w.id},'reps',this.value)" placeholder="次">
+                    </div>`;
                 list.appendChild(div);
             });
             document.getElementById('day-vol').innerText = vol;
@@ -174,75 +257,6 @@
             renderWorkouts();
         }
 
-        // 饮食搜索逻辑
-        function searchFood() {
-            const q = document.getElementById('food-search').value;
-            const res = document.getElementById('food-results');
-            res.innerHTML = '';
-            if(!q) return;
-            foodDB.filter(f => f.name.includes(q)).forEach(f => {
-                const div = document.createElement('div');
-                div.className = "glass p-3 flex justify-between items-center text-xs";
-                div.innerHTML = `
-                    <div>
-                        <div class="font-bold text-white">${f.name} <span class="font-normal text-gray-500">${f.unit}</span></div>
-                        <div class="text-[10px] mt-1">P:${f.p}g | C:${f.c}g | F:${f.f}g | ${f.k}kcal</div>
-                    </div>
-                    <button onclick="addNutri(${JSON.stringify(f).replace(/"/g, '&quot;')})" class="text-green-500 font-bold">增加</button>
-                `;
-                res.appendChild(div);
-            });
-        }
-
-        function addNutri(f) {
-            appData.dailyNutri.p += f.p;
-            appData.dailyNutri.c += f.c;
-            appData.dailyNutri.f += f.f;
-            appData.dailyNutri.kcal += f.k;
-            updateNutriUI();
-            save();
-        }
-
-        function updateNutriUI() {
-            const n = appData.dailyNutri;
-            document.getElementById('curr-kcal').innerText = Math.round(n.kcal);
-            document.getElementById('p-stat').innerText = Math.round(n.p) + 'g';
-            document.getElementById('c-stat').innerText = Math.round(n.c) + 'g';
-            document.getElementById('f-stat').innerText = Math.round(n.f) + 'g';
-            
-            // 简单进度条演示
-            const targetK = parseFloat(document.getElementById('target-kcal').innerText) || 1;
-            document.getElementById('kcal-bar').style.width = Math.min((n.kcal / targetK) * 100, 100) + '%';
-            document.getElementById('p-bar').style.width = Math.min((n.p / (appData.w * 2)) * 100, 100) + '%';
-        }
-
-        // 断食逻辑
-        function toggleFast() {
-            appData.fasting.active = !appData.fasting.active;
-            const btn = document.getElementById('fast-btn');
-            const timer = document.getElementById('fast-timer');
-            if(appData.fasting.active) {
-                appData.fasting.start = Date.now();
-                btn.innerText = "结束断食";
-                timer.classList.remove('hidden');
-                updateFastTimer();
-            } else {
-                btn.innerText = "开启断食计时";
-                timer.classList.add('hidden');
-            }
-            save();
-        }
-
-        function updateFastTimer() {
-            if(!appData.fasting.active) return;
-            const diff = Date.now() - appData.fasting.start;
-            const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
-            const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-            const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-            document.getElementById('fast-timer').innerText = `断食已持续: ${h}:${m}:${s}`;
-            setTimeout(updateFastTimer, 1000);
-        }
-
         function showTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('nav-active'));
@@ -250,20 +264,19 @@
             document.getElementById('nav-' + id).classList.add('nav-active');
         }
 
-        function save() { localStorage.setItem('iron_pro_v7', JSON.stringify(appData)); }
-        
+        function save() { localStorage.setItem('iron_ultra_v8', JSON.stringify(appData)); }
+        function resetData() { if(confirm('确定要清空所有数据重来吗？')) { localStorage.clear(); location.reload(); } }
+
         window.onload = () => {
-            const saved = localStorage.getItem('iron_pro_v7');
+            const saved = localStorage.getItem('iron_ultra_v8');
             if(saved) {
                 appData = JSON.parse(saved);
                 document.getElementById('height').value = appData.h || '';
                 document.getElementById('weight').value = appData.w || '';
-                document.getElementById('bp-pr').value = appData.bp || '';
-                if(appData.fasting.active) updateFastTimer();
+                document.getElementById('carb-cycle').value = appData.carbMode || 'none';
             }
             switchDay(currentDay);
             updateBase();
-            showTab('data');
         };
     </script>
 </body>
