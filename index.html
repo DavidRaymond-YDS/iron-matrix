@@ -3,223 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Matrix | 数字化健身实验室</title>
+    <title>Iron Matrix Pro | 终极健身实验室</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --neon: #39FF14; }
-        body { background: #000; color: #E5E5E7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; }
-        /* 深度优化输入框，确保汉字和数字输入不受阻碍 */
-        input { 
-            background: #111 !important; 
-            border: 1px solid #333 !important; 
-            color: #fff !important; 
-            padding: 10px !important; 
-            border-radius: 8px !important;
-            outline: none !important;
-        }
-        input:focus { border-color: var(--neon) !important; box-shadow: 0 0 8px rgba(57, 255, 20, 0.2); }
+        :root { --neon: #39FF14; --carb: #3b82f6; --fat: #f59e0b; }
+        body { background: #000; color: #E5E5E7; font-family: system-ui, -apple-system, sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
+        input { background: #111 !important; border: 1px solid #333 !important; color: #fff !important; padding: 10px !important; border-radius: 8px !important; outline: none !important; width: 100%; }
+        input:focus { border-color: var(--neon) !important; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .nav-active { color: var(--neon); border-top: 2px solid var(--neon); }
+        .nav-active { color: var(--neon); }
+        .day-btn.active { background: var(--neon); color: #000; font-weight: bold; }
     </style>
 </head>
 <body class="p-4 pb-40">
 
     <div class="max-w-2xl mx-auto">
-        
         <div id="tab-data" class="tab-content active space-y-6">
-            <header class="py-6">
-                <h1 class="text-2xl font-black italic tracking-tighter text-white uppercase">Body Metrics</h1>
-                <p class="text-xs text-gray-500">第一步：输入你的基础数据以启动计算</p>
-            </header>
-
+            <header class="py-6"><h1 class="text-2xl font-black italic tracking-tighter uppercase">User Profile</h1></header>
             <section class="glass p-6 space-y-6">
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-2">
-                        <label class="text-[10px] uppercase text-gray-500 font-bold">身高 (cm)</label>
-                        <input type="number" id="height" placeholder="175" oninput="updateCore()">
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label class="text-[10px] uppercase text-gray-500 font-bold">体重 (kg)</label>
-                        <input type="number" id="weight" placeholder="75" oninput="updateCore()">
-                    </div>
+                    <div><label class="text-[10px] text-gray-500 uppercase">身高 (cm)</label><input type="number" id="height" placeholder="0" oninput="updateBase()"></div>
+                    <div><label class="text-[10px] text-gray-500 uppercase">体重 (kg)</label><input type="number" id="weight" placeholder="0" oninput="updateBase()"></div>
                 </div>
-                
                 <div class="grid grid-cols-3 gap-4 pt-4 border-t border-white/5">
-                    <div class="flex flex-col gap-2 text-center">
-                        <label class="text-[10px] text-gray-500 uppercase">卧推 PR</label>
-                        <input type="number" id="bp-pr" placeholder="90" oninput="updateCore()" class="text-center">
-                    </div>
-                    <div class="flex flex-col gap-2 text-center">
-                        <label class="text-[10px] text-gray-500 uppercase">深蹲 PR</label>
-                        <input type="number" id="sq-pr" placeholder="150" oninput="updateCore()" class="text-center">
-                    </div>
-                    <div class="flex flex-col gap-2 text-center">
-                        <label class="text-[10px] text-gray-500 uppercase">硬拉 PR</label>
-                        <input type="number" id="dl-pr" placeholder="160" oninput="updateCore()" class="text-center">
-                    </div>
+                    <div><label class="text-[10px] text-gray-500 uppercase">卧推 PR</label><input type="number" id="bp-pr" placeholder="0" oninput="updateBase()"></div>
+                    <div><label class="text-[10px] text-gray-500 uppercase">深蹲 PR</label><input type="number" id="sq-pr" placeholder="0" oninput="updateBase()"></div>
+                    <div><label class="text-[10px] text-gray-500 uppercase">硬拉 PR</label><input type="number" id="dl-pr" placeholder="0" oninput="updateBase()"></div>
+                </div>
+                <div class="pt-4 border-t border-white/5 flex justify-between items-center">
+                    <span class="text-xs text-gray-400">每日建议热量 (TDEE):</span>
+                    <span class="text-xl font-mono" id="tdee-val">0</span>
                 </div>
             </section>
-
-            <section class="glass p-6 flex justify-between items-center">
-                <div class="text-xs text-gray-400">预估每日总消耗 ($TDEE$)</div>
-                <div class="text-2xl font-mono text-white"><span id="tdee-val">0</span> <small class="text-[10px] text-gray-600">KCAL</small></div>
+            <section class="glass p-6 space-y-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase">高级模式</h3>
+                <div class="flex gap-2">
+                    <select id="carb-cycle" class="flex-1 bg-black border border-gray-800 p-2 rounded-lg text-sm" onchange="updateBase()">
+                        <option value="none">正常饮食</option>
+                        <option value="high">高碳日 (训练日)</option>
+                        <option value="low">低碳日 (休息日)</option>
+                    </select>
+                    <button onclick="toggleFast()" id="fast-btn" class="flex-1 border border-gray-800 rounded-lg text-xs">开启断食计时</button>
+                </div>
+                <div id="fast-timer" class="hidden text-center font-mono text-orange-500 text-sm">断食已持续: 00:00:00</div>
             </section>
         </div>
 
         <div id="tab-train" class="tab-content space-y-6">
-            <header class="py-6 flex justify-between items-end">
-                <div>
-                    <h1 class="text-2xl font-black italic tracking-tighter text-white uppercase">Training Matrix</h1>
-                    <p class="text-xs text-gray-500">今日总容量: <span id="total-vol" class="text-green-500">0</span> kg</p>
-                </div>
-                <button onclick="addRow()" class="bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-green-500 transition-all">+ 增加动作</button>
+            <header class="py-6 flex justify-between items-center">
+                <h1 class="text-2xl font-black italic tracking-tighter uppercase">Weekly Log</h1>
+                <button onclick="addWorkoutRow()" class="bg-white text-black px-4 py-1 rounded text-xs font-bold">+ 动作</button>
             </header>
-
-            <div id="workout-list" class="space-y-4">
-                </div>
-            
-            <div id="empty-state" class="text-center py-20 text-gray-600 text-sm italic">
-                列表为空，点击上方“增加动作”开始记录
+            <div class="flex justify-between gap-1 overflow-x-auto pb-2">
+                <button onclick="switchDay(0)" class="day-btn flex-1 p-2 glass text-[10px]">一</button>
+                <button onclick="switchDay(1)" class="day-btn flex-1 p-2 glass text-[10px]">二</button>
+                <button onclick="switchDay(2)" class="day-btn flex-1 p-2 glass text-[10px]">三</button>
+                <button onclick="switchDay(3)" class="day-btn flex-1 p-2 glass text-[10px]">四</button>
+                <button onclick="switchDay(4)" class="day-btn flex-1 p-2 glass text-[10px]">五</button>
+                <button onclick="switchDay(5)" class="day-btn flex-1 p-2 glass text-[10px]">六</button>
+                <button onclick="switchDay(6)" class="day-btn flex-1 p-2 glass text-[10px]">日</button>
             </div>
+            <div id="workout-list" class="space-y-4"></div>
+            <div class="glass p-4 text-center text-xs text-green-500">该日总容量: <span id="day-vol">0</span> kg</div>
         </div>
 
         <div id="tab-food" class="tab-content space-y-6">
-            <header class="py-6">
-                <h1 class="text-2xl font-black italic tracking-tighter text-white uppercase">Nutrition</h1>
-                <p class="text-xs text-gray-500">蛋白质摄入追踪</p>
-            </header>
-            <section class="glass p-6">
-                <div class="flex justify-between text-xs mb-2">
-                    <span>当前摄入: <b id="p-count">0</b>g</span>
-                    <span>目标: <b id="p-target">0</b>g</span>
-                </div>
-                <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div id="p-bar" class="h-full bg-green-500 transition-all duration-500" style="width: 0%"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-2 mt-6">
-                    <input type="number" id="p-input" placeholder="输入蛋白质克数">
-                    <button onclick="addP()" class="bg-green-500 text-black font-bold rounded-lg">手动添加</button>
+            <header class="py-6"><h1 class="text-2xl font-black italic tracking-tighter uppercase">Nutrition</h1></header>
+            <section class="glass p-6 space-y-4 text-xs">
+                <div class="flex justify-between"><span>能量: <b id="curr-kcal">0</b> / <b id="target-kcal">0</b> kcal</span></div>
+                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden"><div id="kcal-bar" class="h-full bg-white transition-all"></div></div>
+                <div class="grid grid-cols-3 gap-4 font-mono">
+                    <div>蛋白 <div id="p-stat">0g</div><div class="h-1 bg-green-900 mt-1"><div id="p-bar" class="h-full bg-green-500"></div></div></div>
+                    <div>碳水 <div id="c-stat">0g</div><div class="h-1 bg-blue-900 mt-1"><div id="c-bar" class="h-full bg-blue-500"></div></div></div>
+                    <div>脂肪 <div id="f-stat">0g</div><div class="h-1 bg-yellow-900 mt-1"><div id="f-bar" class="h-full bg-yellow-500"></div></div></div>
                 </div>
             </section>
+            <section class="glass p-6">
+                <input type="text" id="food-search" placeholder="输入食物名称查询..." oninput="searchFood()">
+                <div id="food-results" class="mt-4 space-y-2"></div>
+            </section>
         </div>
-
     </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-white/10 flex justify-around p-3 z-50">
-        <button onclick="showTab('data')" id="nav-data" class="flex flex-col items-center gap-1 text-gray-500 transition-all">
-            <span class="text-xl">📊</span><span class="text-[10px]">数据</span>
-        </button>
-        <button onclick="showTab('train')" id="nav-train" class="flex flex-col items-center gap-1 text-gray-500 transition-all">
-            <span class="text-xl">🏋️</span><span class="text-[10px]">训练</span>
-        </button>
-        <button onclick="showTab('food')" id="nav-food" class="flex flex-col items-center gap-1 text-gray-500 transition-all">
-            <span class="text-xl">🥩</span><span class="text-[10px]">饮食</span>
-        </button>
+    <nav class="fixed bottom-0 left-0 right-0 bg-black/90 border-t border-white/10 flex justify-around p-4 z-50">
+        <button onclick="showTab('data')" id="nav-data" class="nav-item flex flex-col items-center"><span>📊</span><span class="text-[10px]">数据</span></button>
+        <button onclick="showTab('train')" id="nav-train" class="nav-item flex flex-col items-center"><span>🏋️</span><span class="text-[10px]">周训练</span></button>
+        <button onclick="showTab('food')" id="nav-food" class="nav-item flex flex-col items-center"><span>🥩</span><span class="text-[10px]">饮食</span></button>
     </nav>
 
     <script>
-        let appData = { h:175, w:75, bp:90, sq:150, dl:160, protein:0, workouts:[] };
+        // 核心数据结构
+        let appData = {
+            h: 0, w: 0, bp: 0, sq: 0, dl: 0,
+            carbMode: 'none',
+            fasting: { active: false, start: null },
+            dailyNutri: { p: 0, c: 0, f: 0, kcal: 0 },
+            weeklyWorkouts: [[], [], [], [], [], [], []] // 周一到周日
+        };
+        let currentDay = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
-        function updateCore() {
-            appData.h = document.getElementById('height').value || 0;
-            appData.w = document.getElementById('weight').value || 0;
+        // 简易食物库 (真实项目中可对接外部API，这里内置示例)
+        const foodDB = [
+            { name: "鸡胸肉", p: 31, c: 0, f: 3.6, k: 165, unit: "100g" },
+            { name: "鸡蛋", p: 6.3, c: 0.7, f: 4.8, k: 78, unit: "1个" },
+            { name: "糙米饭", p: 2.7, c: 24, f: 0.9, k: 111, unit: "100g" },
+            { name: "牛排(瘦)", p: 25, c: 0, f: 8, k: 180, unit: "100g" },
+            { name: "牛油果", p: 2, c: 8.5, f: 14.7, k: 160, unit: "100g" },
+            { name: "蛋白粉", p: 24, c: 2, f: 1.5, k: 120, unit: "1勺" }
+        ];
+
+        function updateBase() {
+            appData.h = parseFloat(document.getElementById('height').value) || 0;
+            appData.w = parseFloat(document.getElementById('weight').value) || 0;
             appData.bp = document.getElementById('bp-pr').value || 0;
-            appData.sq = document.getElementById('sq-pr').value || 0;
-            appData.dl = document.getElementById('dl-pr').value || 0;
+            appData.carbMode = document.getElementById('carb-cycle').value;
             
-            // TDEE: Mifflin-St Jeor
-            const tdee = Math.round((10 * appData.w + 6.25 * appData.h - 5 * 25 + 5) * 1.4);
+            const bmr = 10 * appData.w + 6.25 * appData.h - 5 * 25 + 5;
+            const tdee = Math.round(bmr * 1.4);
             document.getElementById('tdee-val').innerText = tdee;
-            document.getElementById('p-target').innerText = appData.w * 2;
-            updatePBar();
+            document.getElementById('target-kcal').innerText = tdee;
+            updateNutriUI();
             save();
         }
 
-        function addRow() {
-            appData.workouts.push({ id:Date.now(), name:'', weight:0, sets:0, reps:0 });
+        // 训练逻辑
+        function switchDay(day) {
+            currentDay = day;
+            document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', i === day));
+            renderWorkouts();
+        }
+
+        function addWorkoutRow() {
+            appData.weeklyWorkouts[currentDay].push({ id: Date.now(), name: '', weight: 0, sets: 0, reps: 0 });
             renderWorkouts();
         }
 
         function renderWorkouts() {
             const list = document.getElementById('workout-list');
             list.innerHTML = '';
-            let total = 0;
-            
-            appData.workouts.forEach(w => {
-                const vol = w.weight * w.sets * w.reps;
-                total += vol;
+            let vol = 0;
+            appData.weeklyWorkouts[currentDay].forEach(w => {
+                const itemVol = w.weight * w.sets * w.reps;
+                vol += itemVol;
                 const div = document.createElement('div');
-                div.className = "glass p-4 space-y-4 relative";
+                div.className = "glass p-4 space-y-3 relative";
                 div.innerHTML = `
-                    <button onclick="delRow(${w.id})" class="absolute top-2 right-2 text-gray-600 text-lg">×</button>
-                    <input type="text" value="${w.name}" onchange="updateW(${w.id},'name',this.value)" placeholder="动作名称 (如: 卧推)" class="w-full font-bold">
+                    <button onclick="delRow(${w.id})" class="absolute top-2 right-2 text-gray-600">×</button>
+                    <input type="text" value="${w.name}" onchange="updateW(${w.id},'name',this.value)" placeholder="项目名称" class="font-bold">
                     <div class="grid grid-cols-3 gap-2">
-                        <div><small class="text-[10px] text-gray-500">重量(KG)</small><input type="number" value="${w.weight}" oninput="updateW(${w.id},'weight',this.value)" class="w-full"></div>
-                        <div><small class="text-[10px] text-gray-500">组数</small><input type="number" value="${w.sets}" oninput="updateW(${w.id},'sets',this.value)" class="w-full"></div>
-                        <div><small class="text-[10px] text-gray-500">次数</small><input type="number" value="${w.reps}" oninput="updateW(${w.id},'reps',this.value)" class="w-full"></div>
+                        <input type="number" value="${w.weight}" oninput="updateW(${w.id},'weight',this.value)" placeholder="KG">
+                        <input type="number" value="${w.sets}" oninput="updateW(${w.id},'sets',this.value)" placeholder="组">
+                        <input type="number" value="${w.reps}" oninput="updateW(${w.id},'reps',this.value)" placeholder="回">
                     </div>
-                    <div class="text-right text-[10px] text-green-500 font-mono">单项容量: ${vol} KG</div>
                 `;
                 list.appendChild(div);
             });
-            document.getElementById('total-vol').innerText = total;
-            document.getElementById('empty-state').style.display = appData.workouts.length ? 'none' : 'block';
+            document.getElementById('day-vol').innerText = vol;
             save();
         }
 
         function updateW(id, field, val) {
-            const item = appData.workouts.find(x => x.id === id);
-            if(item) {
-                item[field] = field === 'name' ? val : (parseFloat(val) || 0);
-                renderWorkouts();
-            }
+            const item = appData.weeklyWorkouts[currentDay].find(x => x.id === id);
+            if(item) { item[field] = field === 'name' ? val : (parseFloat(val) || 0); renderWorkouts(); }
         }
 
         function delRow(id) {
-            appData.workouts = appData.workouts.filter(x => x.id !== id);
+            appData.weeklyWorkouts[currentDay] = appData.weeklyWorkouts[currentDay].filter(x => x.id !== id);
             renderWorkouts();
         }
 
-        function addP() {
-            const val = parseFloat(document.getElementById('p-input').value) || 0;
-            appData.protein += val;
-            document.getElementById('p-input').value = '';
-            updatePBar();
+        // 饮食搜索逻辑
+        function searchFood() {
+            const q = document.getElementById('food-search').value;
+            const res = document.getElementById('food-results');
+            res.innerHTML = '';
+            if(!q) return;
+            foodDB.filter(f => f.name.includes(q)).forEach(f => {
+                const div = document.createElement('div');
+                div.className = "glass p-3 flex justify-between items-center text-xs";
+                div.innerHTML = `
+                    <div>
+                        <div class="font-bold text-white">${f.name} <span class="font-normal text-gray-500">${f.unit}</span></div>
+                        <div class="text-[10px] mt-1">P:${f.p}g | C:${f.c}g | F:${f.f}g | ${f.k}kcal</div>
+                    </div>
+                    <button onclick="addNutri(${JSON.stringify(f).replace(/"/g, '&quot;')})" class="text-green-500 font-bold">增加</button>
+                `;
+                res.appendChild(div);
+            });
+        }
+
+        function addNutri(f) {
+            appData.dailyNutri.p += f.p;
+            appData.dailyNutri.c += f.c;
+            appData.dailyNutri.f += f.f;
+            appData.dailyNutri.kcal += f.k;
+            updateNutriUI();
             save();
         }
 
-        function updatePBar() {
-            const target = appData.w * 2;
-            const pct = Math.min((appData.protein / target) * 100, 100);
-            document.getElementById('p-count').innerText = appData.protein;
-            document.getElementById('p-bar').style.width = pct + '%';
+        function updateNutriUI() {
+            const n = appData.dailyNutri;
+            document.getElementById('curr-kcal').innerText = Math.round(n.kcal);
+            document.getElementById('p-stat').innerText = Math.round(n.p) + 'g';
+            document.getElementById('c-stat').innerText = Math.round(n.c) + 'g';
+            document.getElementById('f-stat').innerText = Math.round(n.f) + 'g';
+            
+            // 简单进度条演示
+            const targetK = parseFloat(document.getElementById('target-kcal').innerText) || 1;
+            document.getElementById('kcal-bar').style.width = Math.min((n.kcal / targetK) * 100, 100) + '%';
+            document.getElementById('p-bar').style.width = Math.min((n.p / (appData.w * 2)) * 100, 100) + '%';
+        }
+
+        // 断食逻辑
+        function toggleFast() {
+            appData.fasting.active = !appData.fasting.active;
+            const btn = document.getElementById('fast-btn');
+            const timer = document.getElementById('fast-timer');
+            if(appData.fasting.active) {
+                appData.fasting.start = Date.now();
+                btn.innerText = "结束断食";
+                timer.classList.remove('hidden');
+                updateFastTimer();
+            } else {
+                btn.innerText = "开启断食计时";
+                timer.classList.add('hidden');
+            }
+            save();
+        }
+
+        function updateFastTimer() {
+            if(!appData.fasting.active) return;
+            const diff = Date.now() - appData.fasting.start;
+            const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
+            const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+            const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+            document.getElementById('fast-timer').innerText = `断食已持续: ${h}:${m}:${s}`;
+            setTimeout(updateFastTimer, 1000);
         }
 
         function showTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('nav-active'));
             document.getElementById('tab-' + id).classList.add('active');
             document.getElementById('nav-' + id).classList.add('nav-active');
         }
 
-        function save() { localStorage.setItem('iron_final_v6', JSON.stringify(appData)); }
-
+        function save() { localStorage.setItem('iron_pro_v7', JSON.stringify(appData)); }
+        
         window.onload = () => {
-            const saved = localStorage.getItem('iron_final_v6');
+            const saved = localStorage.getItem('iron_pro_v7');
             if(saved) {
                 appData = JSON.parse(saved);
-                document.getElementById('height').value = appData.h;
-                document.getElementById('weight').value = appData.w;
-                document.getElementById('bp-pr').value = appData.bp;
-                document.getElementById('sq-pr').value = appData.sq;
-                document.getElementById('dl-pr').value = appData.dl;
+                document.getElementById('height').value = appData.h || '';
+                document.getElementById('weight').value = appData.w || '';
+                document.getElementById('bp-pr').value = appData.bp || '';
+                if(appData.fasting.active) updateFastTimer();
             }
-            showTab('data'); // 强制默认打开数据页
-            updateCore();
-            renderWorkouts();
-        }
+            switchDay(currentDay);
+            updateBase();
+            showTab('data');
+        };
     </script>
 </body>
 </html>
