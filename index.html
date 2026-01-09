@@ -3,127 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Matrix | 数字化健身实验室</title>
+    <title>Iron Matrix | 极简训练看板</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            background-color: #000000;
-            color: #E5E5E7;
-            font-family: 'Inter', sans-serif;
+        :root { --neon: #39FF14; }
+        body { background: #000; color: #eee; font-family: 'Inter', sans-serif; }
+        .glass { 
+            background: #111; 
+            border: 1px solid #222; 
+            border-radius: 20px; 
+            padding: 24px; 
+            transition: border-color 0.3s;
         }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
+        .glass:hover { border-color: #333; }
+        /* 针对电脑端优化输入框 */
+        input[type="number"] { 
+            background: #1a1a1a; 
+            border: 1px solid #333; 
+            color: var(--neon); 
+            border-radius: 8px; 
+            padding: 8px; 
+            width: 100px; 
+            font-family: monospace;
+            font-size: 1.1rem;
+            outline: none;
         }
-        .neon-text { color: #39FF14; text-shadow: 0 0 10px rgba(57, 255, 20, 0.3); }
-        .neon-border { border-color: #39FF14; }
-        .progress-ring { transform: rotate(-90deg); }
+        input[type="number"]:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(57, 255, 20, 0.2); }
+        .btn-neon { 
+            border: 1px solid var(--neon); 
+            color: var(--neon); 
+            padding: 8px 16px; 
+            border-radius: 12px; 
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .btn-neon:hover { background: var(--neon); color: #000; cursor: pointer; }
     </style>
 </head>
-<body class="p-6 md:p-12">
+<body class="p-6 pb-24">
 
-    <header class="max-w-4xl mx-auto flex justify-between items-end mb-12">
-        <div>
-            <h1 class="text-xs uppercase tracking-widest text-gray-500 mb-1">Project Iron v1.0</h1>
-            <h2 class="text-2xl font-light">你好, <span class="font-semibold">训练者</span></h2>
-        </div>
-        <div class="text-right">
-            <div class="text-xs text-gray-500 uppercase">状态</div>
-            <div class="neon-text mono">PR 恢复模式</div>
-        </div>
-    </header>
+    <div class="max-w-md mx-auto space-y-8">
+        <header class="flex justify-between items-center py-4">
+            <div>
+                <h1 class="text-2xl font-black tracking-tighter text-white">IRON MATRIX</h1>
+                <p class="text-[10px] text-gray-500 tracking-[0.2em]">PRECISION TRAINING V1.0</p>
+            </div>
+            <button onclick="resetData()" class="text-gray-700 hover:text-red-500 transition-colors text-xs">RESET</button>
+        </header>
 
-    <main class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        <section class="glass-card p-8 flex flex-col items-center justify-center relative overflow-hidden">
-            <div class="absolute top-4 left-6 text-[10px] uppercase tracking-tighter text-gray-500">Daily Energy Matrix</div>
-            
-            <div class="relative flex items-center justify-center mt-4">
-                <svg class="progress-ring" width="220" height="220">
-                    <circle stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="90" cx="110" cy="110"/>
-                    <circle stroke="#39FF14" stroke-width="8" stroke-dasharray="565" stroke-dashoffset="150" stroke-linecap="round" fill="transparent" r="90" cx="110" cy="110"/>
-                </svg>
-                <div class="absolute text-center">
-                    <div class="text-4xl font-bold mono">1,840</div>
-                    <div class="text-[10px] text-gray-500 uppercase tracking-widest">剩余卡路里</div>
+        <section class="glass">
+            <h3 class="text-[10px] text-gray-500 uppercase mb-6 tracking-[0.3em] font-bold">身体参数</h3>
+            <div class="grid grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="block text-xs text-gray-400">身高 (CM)</label>
+                    <input type="number" id="height" value="175" step="0.5">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-xs text-gray-400">体重 (KG)</label>
+                    <input type="number" id="weight" value="75" step="0.1">
                 </div>
             </div>
+            <div class="mt-8 pt-6 border-t border-gray-800/50 flex justify-between items-end">
+                <span class="text-sm text-gray-400 font-light">日消耗 $TDEE$:</span>
+                <span class="text-3xl font-mono text-white leading-none"><span id="tdee-res">2450</span> <small class="text-[10px] text-gray-600 uppercase">kcal</small></span>
+            </div>
+        </section>
 
-            <div class="w-full mt-8 grid grid-cols-3 gap-4 text-center">
-                <div>
-                    <div class="text-[10px] text-gray-500 mb-1">蛋白质</div>
-                    <div class="h-1 bg-gray-800 rounded-full"><div class="h-full bg-green-400 w-2/3 rounded-full"></div></div>
-                    <div class="text-xs mt-2 mono">142/210g</div>
+        <section class="glass">
+            <h3 class="text-[10px] text-gray-500 uppercase mb-6 tracking-[0.3em] font-bold">PR 矩阵</h3>
+            <div class="space-y-6">
+                <div class="flex justify-between items-center group">
+                    <span class="text-sm text-gray-400 group-hover:text-white transition-colors">卧推 Bench Press</span>
+                    <input type="number" id="bp" value="90">
                 </div>
-                <div>
-                    <div class="text-[10px] text-gray-500 mb-1">碳水</div>
-                    <div class="h-1 bg-gray-800 rounded-full"><div class="h-full bg-blue-400 w-1/2 rounded-full"></div></div>
-                    <div class="text-xs mt-2 mono">180/350g</div>
+                <div class="flex justify-between items-center group">
+                    <span class="text-sm text-gray-400 group-hover:text-white transition-colors">深蹲 Squat</span>
+                    <input type="number" id="sq" value="150">
                 </div>
-                <div>
-                    <div class="text-[10px] text-gray-500 mb-1">脂肪</div>
-                    <div class="h-1 bg-gray-800 rounded-full"><div class="h-full bg-orange-400 w-1/3 rounded-full"></div></div>
-                    <div class="text-xs mt-2 mono">45/80g</div>
+                <div class="flex justify-between items-center group">
+                    <span class="text-sm text-gray-400 group-hover:text-white transition-colors">硬拉 Deadlift</span>
+                    <input type="number" id="dl" value="160">
                 </div>
             </div>
         </section>
 
-        <div class="space-y-6">
-            <section class="glass-card p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-xs uppercase tracking-widest text-gray-500 font-semibold">16:8 轻断食</span>
-                    <span class="px-2 py-1 rounded bg-green-900/30 text-green-400 text-[10px]">进食窗口开启</span>
+        <section class="glass bg-white/[0.02]">
+            <h3 class="text-[10px] text-green-500 uppercase mb-6 font-bold tracking-[0.3em]">建议训练重量 (75% 1RM)</h3>
+            <div id="plan" class="space-y-3 font-mono text-sm">
                 </div>
-                <div class="text-3xl mono mb-2">04:22:15</div>
-                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                    <div class="bg-green-500 h-full w-3/4"></div>
-                </div>
-            </section>
+        </section>
 
-            <section class="glass-card p-6">
-                <div class="text-xs uppercase tracking-widest text-gray-500 mb-4 font-semibold">核心三大项 PR</div>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">卧推 (Bench Press)</span>
-                        <span class="mono text-lg">90 <span class="text-xs text-gray-500">KG</span></span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">深蹲 (Squat)</span>
-                        <span class="mono text-lg">150 <span class="text-xs text-gray-500">KG</span></span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">硬拉 (Deadlift)</span>
-                        <span class="mono text-lg text-blue-400">160 <span class="text-xs text-gray-500">KG</span></span>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
+        <section class="glass">
+            <h3 class="text-[10px] text-gray-500 uppercase mb-6 tracking-[0.3em] font-bold">快捷营养</h3>
+            <div class="flex gap-3 flex-wrap mb-8">
+                <div onclick="addProtein(25)" class="btn-neon">胸肉 +25g</div>
+                <div onclick="addProtein(6)" class="btn-neon">鸡蛋 +6g</div>
+                <div onclick="addProtein(22)" class="btn-neon">粉类 +22g</div>
+            </div>
+            <div class="relative h-2 bg-gray-900 rounded-full overflow-hidden mb-2">
+                <div id="prot-bar" class="absolute top-0 left-0 h-full bg-green-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] font-mono text-gray-500">
+                <span>PROTEIN INTAKE</span>
+                <span class="text-white text-sm"><span id="prot-count">0</span> / <span id="prot-target">150</span>g</span>
+            </div>
+        </section>
+    </div>
 
-    <footer class="max-w-4xl mx-auto mt-8 glass-card p-6">
-        <div class="text-xs uppercase tracking-widest text-gray-500 mb-6 font-semibold">力量与体重演化趋势</div>
-        <div class="h-32 w-full flex items-end gap-1">
-            <div class="flex-1 bg-gray-800 rounded-t h-1/2"></div>
-            <div class="flex-1 bg-gray-800 rounded-t h-2/3"></div>
-            <div class="flex-1 bg-gray-800 rounded-t h-3/4"></div>
-            <div class="flex-1 bg-green-500/50 rounded-t h-4/5 border-t-2 border-green-400"></div>
-            <div class="flex-1 bg-green-500/50 rounded-t h-5/6 border-t-2 border-green-400"></div>
-            <div class="flex-1 bg-green-500/50 rounded-t h-full border-t-2 border-green-400"></div>
-            <div class="flex-1 bg-gray-800 rounded-t h-3/4"></div>
-        </div>
-    </footer>
+    <script>
+        let protein = 0;
+        const inputs = ['height', 'weight', 'bp', 'sq', 'dl'];
 
-    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-72 h-14 glass-card border border-white/20 flex justify-around items-center px-4">
-        <button class="text-green-400">●</button>
-        <button class="text-gray-500">◈</button>
-        <button class="text-gray-500">▣</button>
-        <button class="text-gray-500">⚙</button>
-    </nav>
+        // 核心逻辑：监听所有输入变化
+        function initApp() {
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                // 监听键盘输入、鼠标点击箭头、粘贴等所有行为
+                el.addEventListener('input', calculateEverything);
+            });
+            loadData();
+        }
 
+        function calculateEverything() {
+            const h = parseFloat(document.getElementById('height').value) || 0;
+            const w = parseFloat(document.getElementById('weight').value) || 0;
+            const bp = parseFloat(document.getElementById('bp').value) || 0;
+            const sq = parseFloat(document.getElementById('sq').value) || 0;
+            const dl = parseFloat(document.getElementById('dl').value) || 0;
+
+            // 1. TDEE 计算 (Mifflin-St Jeor 公式, 假设活动系数 1.375)
+            const bmr = 10 * w + 6.25 * h - 5 * 25 + 5;
+            const tdee = Math.round(bmr * 1.375);
+            document.getElementById('tdee-res').innerText = tdee || 0;
+
+            // 2. 蛋白质目标 (体重 x 2)
+            const protTarget = Math.round(w * 2);
+            document.getElementById('prot-target').innerText = protTarget || 150;
+            const percent = Math.min((protein / protTarget) * 100, 100);
+            document.getElementById('prot-bar').style.width = percent + '%';
+
+            // 3. 力量方案
+            document.getElementById('plan').innerHTML = `
+                <div class="flex justify-between border-b border-white/5 pb-2"><span>卧推 (5-8回):</span> <span class="text-white">${(bp*0.75).toFixed(1)} kg</span></div>
+                <div class="flex justify-between border-b border-white/5 pb-2"><span>深蹲 (8-10回):</span> <span class="text-white">${(sq*0.7).toFixed(1)} kg</span></div>
+                <div class="flex justify-between border-b border-white/5 pb-2"><span>硬拉 (3-5回):</span> <span class="text-white">${(dl*0.8).toFixed(1)} kg</span></div>
+            `;
+
+            // 4. 保存到本地
+            saveData({h, w, bp, sq, dl, protein});
+        }
+
+        function addProtein(amt) {
+            protein += amt;
+            document.getElementById('prot-count').innerText = protein;
+            calculateEverything();
+        }
+
+        function saveData(data) {
+            localStorage.setItem('iron_matrix_v2', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = JSON.parse(localStorage.getItem('iron_matrix_v2'));
+            if(saved) {
+                document.getElementById('height').value = saved.h;
+                document.getElementById('weight').value = saved.w;
+                document.getElementById('bp').value = saved.bp;
+                document.getElementById('sq').value = saved.sq;
+                document.getElementById('dl').value = saved.dl;
+                protein = saved.protein || 0;
+                document.getElementById('prot-count').innerText = protein;
+            }
+            calculateEverything();
+        }
+
+        function resetData() {
+            if(confirm('重置所有数据？')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        window.onload = initApp;
+    </script>
 </body>
-
 </html>
